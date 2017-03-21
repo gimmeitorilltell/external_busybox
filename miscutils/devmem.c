@@ -3,6 +3,16 @@
  *  Copyright (C) 2000, Jan-Derk Bakker (J.D.Bakker@its.tudelft.nl)
  *  Copyright (C) 2008, BusyBox Team. -solar 4/26/08
  */
+//config:config DEVMEM
+//config:	bool "devmem"
+//config:	default y
+//config:	help
+//config:	  devmem is a small program that reads and writes from physical
+//config:	  memory using /dev/mem.
+
+//applet:IF_DEVMEM(APPLET(devmem, BB_DIR_SBIN, BB_SUID_DROP))
+
+//kbuild:lib-$(CONFIG_DEVMEM) += devmem.o
 
 //usage:#define devmem_trivial_usage
 //usage:	"ADDRESS [WIDTH [VALUE]]"
@@ -19,7 +29,7 @@ int devmem_main(int argc UNUSED_PARAM, char **argv)
 {
 	void *map_base, *virt_addr;
 	uint64_t read_result;
-	uint64_t writeval = 0;
+	uint64_t writeval = writeval; /* for compiler */
 	off_t target;
 	unsigned page_size, mapped_size, offset_in_page;
 	int fd;

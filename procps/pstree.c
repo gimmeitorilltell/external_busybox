@@ -94,7 +94,7 @@ struct globals {
  */
 static void ensure_buffer_capacity(int bufindex)
 {
-	if ((unsigned)bufindex >= G.capacity) {
+	if (bufindex >= G.capacity) {
 		G.capacity += 0x100;
 		G.width = xrealloc(G.width, G.capacity * sizeof(G.width[0]));
 		G.more = xrealloc(G.more, G.capacity * sizeof(G.more[0]));
@@ -381,7 +381,7 @@ int pstree_main(int argc UNUSED_PARAM, char **argv)
 
 	INIT_G();
 
-	get_terminal_width_height(0, &G.output_width, NULL);
+	G.output_width = get_terminal_width(0);
 
 	opt_complementary = "?1";
 	getopt32(argv, "p");

@@ -11,6 +11,23 @@
  *
  * See RFC 1179 for protocol description.
  */
+//config:config LPR
+//config:	bool "lpr"
+//config:	default y
+//config:	help
+//config:	  lpr sends files (or standard input) to a print spooling daemon.
+//config:
+//config:config LPQ
+//config:	bool "lpq"
+//config:	default y
+//config:	help
+//config:	  lpq is a print spool queue examination and manipulation program.
+
+//applet:IF_LPQ(APPLET_ODDNAME(lpq, lpqr, BB_DIR_USR_BIN, BB_SUID_DROP, lpq))
+//applet:IF_LPR(APPLET_ODDNAME(lpr, lpqr, BB_DIR_USR_BIN, BB_SUID_DROP, lpr))
+
+//kbuild:lib-$(CONFIG_LPR) += lpr.o
+//kbuild:lib-$(CONFIG_LPQ) += lpr.o
 
 //usage:#define lpr_trivial_usage
 //usage:       "-P queue[@host[:port]] -U USERNAME -J TITLE -Vmh [FILE]..."
@@ -245,7 +262,7 @@ int lpqr_main(int argc UNUSED_PARAM, char *argv[])
 		// send data file, with name "dfaXXX"
 		if (opts & LPR_V)
 			bb_error_msg("sending data file");
-		fdprintf(fd, "\x3" "%"FILESIZE_FMT"u d%s\n", st.st_size, remote_filename);
+		fdprintf(fd, "\x3" "%"OFF_FMT"u d%s\n", st.st_size, remote_filename);
 		get_response_or_say_and_die(fd, "sending data file");
 		if (bb_copyfd_size(dfd, fd, st.st_size) != st.st_size) {
 			// We're screwed. We sent less bytes than we advertised.

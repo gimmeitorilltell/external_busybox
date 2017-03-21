@@ -30,6 +30,15 @@
  *        a  directory:  $TMPDIR, if set; else the directory specified via
  *        -p; else /tmp [deprecated]
  */
+//config:config MKTEMP
+//config:	bool "mktemp"
+//config:	default y
+//config:	help
+//config:	  mktemp is used to create unique temporary files
+
+//applet:IF_MKTEMP(APPLET(mktemp, BB_DIR_BIN, BB_SUID_DROP))
+
+//kbuild:lib-$(CONFIG_MKTEMP) += mktemp.o
 
 //usage:#define mktemp_trivial_usage
 //usage:       "[-dt] [-p DIR] [TEMPLATE]"
@@ -43,7 +52,7 @@
 //usage:     "\n	-p DIR	Use DIR as a base directory (implies -t)"
 //usage:     "\n	-u	Do not create anything; print a name"
 //usage:     "\n"
-//usage:     "\nBase directory is: -p DIR, else $TMPDIR, else /data/local/tmp"
+//usage:     "\nBase directory is: -p DIR, else $TMPDIR, else /tmp"
 //usage:
 //usage:#define mktemp_example_usage
 //usage:       "$ mktemp /tmp/temp.XXXXXX\n"
@@ -52,10 +61,6 @@
 //usage:       "-rw-------    1 andersen andersen        0 Apr 25 17:10 /tmp/temp.mWiLjM\n"
 
 #include "libbb.h"
-
-#ifdef __BIONIC__
-#define mktemp(s) bb_mktemp(s)
-#endif
 
 int mktemp_main(int argc, char **argv) MAIN_EXTERNALLY_VISIBLE;
 int mktemp_main(int argc UNUSED_PARAM, char **argv)
@@ -73,7 +78,7 @@ int mktemp_main(int argc UNUSED_PARAM, char **argv)
 
 	path = getenv("TMPDIR");
 	if (!path || path[0] == '\0')
-		path = "/data/local/tmp";
+		path = "/tmp";
 
 	opt_complementary = "?1"; /* 1 argument max */
 	opts = getopt32(argv, "dqtp:u", &path);

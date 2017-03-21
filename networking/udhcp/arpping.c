@@ -9,7 +9,6 @@
 #include <net/if_arp.h>
 
 #include "common.h"
-#include "dhcpd.h"
 
 struct arpMsg {
 	/* Ethernet header */
@@ -39,7 +38,8 @@ int FAST_FUNC arpping(uint32_t test_nip,
 		const uint8_t *safe_mac,
 		uint32_t from_ip,
 		uint8_t *from_mac,
-		const char *interface)
+		const char *interface,
+		unsigned timeo)
 {
 	int timeout_ms;
 	struct pollfd pfd[1];
@@ -48,9 +48,12 @@ int FAST_FUNC arpping(uint32_t test_nip,
 	struct sockaddr addr;   /* for interface name */
 	struct arpMsg arp;
 
+	if (!timeo)
+		return 1;
+
 	s = socket(PF_PACKET, SOCK_PACKET, htons(ETH_P_ARP));
 	if (s == -1) {
-		bb_perror_msg("%s", bb_msg_can_not_create_raw_socket);
+		bb_perror_msg(bb_msg_can_not_create_raw_socket);
 		return -1;
 	}
 
@@ -83,7 +86,7 @@ int FAST_FUNC arpping(uint32_t test_nip,
 	}
 
 	/* wait for arp reply, and check it */
-	timeout_ms = 2000;
+	timeout_ms = (int)timeo;
 	do {
 		typedef uint32_t aliased_uint32_t FIX_ALIASING;
 		int r;
@@ -124,10 +127,10 @@ int FAST_FUNC arpping(uint32_t test_nip,
 		 * this is more under/overflow-resistant
 		 * (people did see overflows here when system time jumps):
 		 */
-	} while ((unsigned)timeout_ms <= 2000);
+	} while ((unsigned)timeout_ms <= timeo);
 
  ret:
 	close(s);
-	log1("%srp reply received for this address", rv ? "No a" : "A");
+	log1("%srp reply received for this address", rv ? "no a" : "A");
 	return rv;
 }

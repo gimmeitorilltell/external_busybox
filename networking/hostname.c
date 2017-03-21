@@ -10,6 +10,24 @@
  * Licensed under GPLv2 or later, see file LICENSE in this source tree.
  */
 
+//config:config HOSTNAME
+//config:	bool "hostname"
+//config:	default y
+//config:	help
+//config:	  Show or set the system's host name.
+//config:
+//config:config DNSDOMAINNAME
+//config:	bool "dnsdomainname"
+//config:	default y
+//config:	help
+//config:	  Alias to "hostname -d".
+
+//applet:IF_DNSDOMAINNAME(APPLET_ODDNAME(dnsdomainname, hostname, BB_DIR_BIN, BB_SUID_DROP, dnsdomainname))
+//applet:IF_HOSTNAME(APPLET(hostname, BB_DIR_BIN, BB_SUID_DROP))
+
+//kbuild: lib-$(CONFIG_HOSTNAME) += hostname.o
+//kbuild: lib-$(CONFIG_DNSDOMAINNAME) += hostname.o
+
 //usage:#define hostname_trivial_usage
 //usage:       "[OPTIONS] [HOSTNAME | -F FILE]"
 //usage:#define hostname_full_usage "\n\n"
@@ -42,7 +60,7 @@ static void do_sethostname(char *s, int isfile)
 			config_close(parser);
 	} else if (sethostname(s, strlen(s))) {
 //		if (errno == EPERM)
-//			bb_error_msg_and_die("%s", bb_msg_perm_denied_are_you_root);
+//			bb_error_msg_and_die(bb_msg_perm_denied_are_you_root);
 		bb_perror_msg_and_die("sethostname");
 	}
 }
@@ -131,8 +149,12 @@ int hostname_main(int argc UNUSED_PARAM, char **argv)
 	opts = getopt32(argv, "dfisF:v", &hostname_str);
 	argv += optind;
 	buf = safe_gethostname();
-	if (applet_name[0] == 'd') /* dnsdomainname? */
-		opts = OPT_d;
+	if (ENABLE_DNSDOMAINNAME) {
+		if (!ENABLE_HOSTNAME || applet_name[0] == 'd') {
+			/* dnsdomainname */
+			opts = OPT_d;
+		}
+	}
 
 	if (opts & OPT_dfi) {
 		/* Cases when we need full hostname (or its part) */

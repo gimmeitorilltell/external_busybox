@@ -161,15 +161,15 @@ void FAST_FUNC parse_datestr(const char *date_str, struct tm *ptm)
 					&end) >= 5) {
 			/* Adjust month from 1-12 to 0-11 */
 			ptm->tm_mon -= 1;
-			if (cur_year >= 50) { /* >= 1950 */
+			if ((int)cur_year >= 50) { /* >= 1950 */
 				/* Adjust year: */
 				/* 1. Put it in the current century */
 				ptm->tm_year += (cur_year / 100) * 100;
 				/* 2. If too far in the past, +100 years */
-				if (ptm->tm_year < (int) cur_year - 50)
+				if (ptm->tm_year < cur_year - 50)
 					ptm->tm_year += 100;
 				/* 3. If too far in the future, -100 years */
-				if (ptm->tm_year > (int) cur_year + 50)
+				if (ptm->tm_year > cur_year + 50)
 					ptm->tm_year -= 100;
 			}
 		} else
@@ -186,6 +186,7 @@ void FAST_FUNC parse_datestr(const char *date_str, struct tm *ptm)
 		} else {
 			bb_error_msg_and_die(bb_msg_invalid_date, date_str);
 		}
+		ptm->tm_sec = 0; /* assume zero if [.SS] is not given */
 		if (end == '.') {
 			/* xxx.SS */
 			if (sscanf(strchr(date_str, '.') + 1, "%u%c",

@@ -107,7 +107,11 @@ uuidcache_check_device(const char *device,
 		int depth UNUSED_PARAM)
 {
 	/* note: this check rejects links to devices, among other nodes */
-	if (!S_ISBLK(statbuf->st_mode))
+	if (!S_ISBLK(statbuf->st_mode)
+#if ENABLE_FEATURE_VOLUMEID_UBIFS
+	 && !(S_ISCHR(statbuf->st_mode) && strncmp(bb_basename(device), "ubi", 3) == 0)
+#endif
+	)
 		return TRUE;
 
 	/* Users report that mucking with floppies (especially non-present
@@ -246,10 +250,10 @@ void display_uuid_cache(int scan_devices)
 
 int add_to_uuid_cache(const char *device)
 {
-	static char *uuid; /* for compiler */
-	static char *label;
+	char *uuid = uuid; /* for compiler */
+	char *label = label;
 #if ENABLE_FEATURE_BLKID_TYPE
-	static const char *type;
+	const char *type = type;
 #endif
 	int fd;
 
@@ -266,26 +270,6 @@ int add_to_uuid_cache(const char *device)
 	return 0;
 }
 
-char *get_fstype_from_devname(const char *device)
-{
-#if ENABLE_FEATURE_BLKID_TYPE
-	struct uuidCache_s *uc;
-	struct stat statbuf;
-
-	if (stat(device, &statbuf) < 0)
-		return NULL;
-
-	if (!S_ISBLK(statbuf.st_mode) && !S_ISREG(statbuf.st_mode))
-		return NULL;
-
-	add_to_uuid_cache(device);
-	uc = uuidcache_init(0);
-
-	return (uc != NULL ? (char*)uc->type : NULL);
-#else
-	return NULL;
-#endif
-}
 
 /* Used by mount and findfs */
 
@@ -322,9 +306,9 @@ int resolve_mount_spec(char **fsname)
 {
 	char *tmp = *fsname;
 
-	if (strncmp(*fsname, "UUID=", 5) == 0)
+	if (is_prefixed_with(*fsname, "UUID="))
 		tmp = get_devname_from_uuid(*fsname + 5);
-	else if (strncmp(*fsname, "LABEL=", 6) == 0)
+	else if (is_prefixed_with(*fsname, "LABEL="))
 		tmp = get_devname_from_label(*fsname + 6);
 
 	if (tmp == *fsname)

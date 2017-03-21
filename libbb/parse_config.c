@@ -42,8 +42,8 @@ int parse_main(int argc UNUSED_PARAM, char **argv)
 	int mintokens = 0, ntokens = 128;
 	unsigned noout;
 
-	opt_complementary = "-1:n+:m+:f+";
-	noout = 1 & getopt32(argv, "xn:m:d:f:", &ntokens, &mintokens, &delims, &flags);
+	opt_complementary = "-1";
+	noout = 1 & getopt32(argv, "xn:+m:+d:f:+", &ntokens, &mintokens, &delims, &flags);
 	//argc -= optind;
 	argv += optind;
 
@@ -122,7 +122,7 @@ static int get_line_with_continuation(parser_t *parser)
 		if (nlen <= 0)
 			break;
 
-		if ((ssize_t)parser->line_alloc < len + nlen + 1) {
+		if (parser->line_alloc < len + nlen + 1) {
 			parser->line_alloc = len + nlen + 1;
 			line = parser->line = xrealloc(line, parser->line_alloc);
 		}
